@@ -2,28 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My Library</title>
+  <title>Tic Tac Toe</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>📚 My Library</h1>
+  <h1>Tic Tac Toe</h1>
 
-  <button id="newBookBtn">+ New Book</button>
+  <div id="playerForm">
+    <input type="text" id="player1" placeholder="Player 1 Name">
+    <input type="text" id="player2" placeholder="Player 2 Name">
+    <button id="startBtn">Start Game</button>
+  </div>
 
-  <!-- Book form (hidden by default) -->
-  <dialog id="bookDialog">
-    <form id="bookForm">
-      <label>Title: <input type="text" id="title" required></label><br>
-      <label>Author: <input type="text" id="author" required></label><br>
-      <label>Pages: <input type="number" id="pages" required></label><br>
-      <label>Read: <input type="checkbox" id="read"></label><br>
-      <button type="submit">Add Book</button>
-      <button type="button" id="closeDialog">Cancel</button>
-    </form>
-  </dialog>
+  <div id="gameBoard" class="board"></div>
 
-  <!-- Where books will show -->
-  <div id="library"></div>
+  <div id="result"></div>
+  <button id="restartBtn">Restart Game</button>
 
   <script src="script.js"></script>
 </body>

@@ -1,89 +1,116 @@
-// Book constructor
-function Book(title, author, pages, read) {
-  this.id = crypto.randomUUID(); // unique ID
-  this.title = title;
-  this.author = author;
-  this.pages = pages;
-  this.read = read;
-}
+// Gameboard module
+const Gameboard = (() => {
+  let board = ["", "", "", "", "", "", "", "", ""];
 
-// Toggle read status method (on prototype)
-Book.prototype.toggleRead = function () {
-  this.read = !this.read;
+  const setMark = (index, mark) => {
+    if (board[index] === "") {
+      board[index] = mark;
+      return true;
+    }
+    return false;
+  };
+
+  const getBoard = () => board;
+
+  const reset = () => {
+    board = ["", "", "", "", "", "", "", "", ""];
+  };
+
+  return { setMark, getBoard, reset };
+})();
+
+// Player factory
+const Player = (name, mark) => {
+  return { name, mark };
 };
 
-// Library array
-let library = [];
+// DisplayController module
+const DisplayController = (() => {
+  const boardDiv = document.getElementById("gameBoard");
+  const resultDiv = document.getElementById("result");
 
-// Function to add book
-function addBook(title, author, pages, read) {
-  const book = new Book(title, author, pages, read);
-  library.push(book);
-  displayBooks();
-}
-
-// Function to remove book by ID
-function removeBook(id) {
-  library = library.filter(book => book.id !== id);
-  displayBooks();
-}
-
-// Function to display all books
-function displayBooks() {
-  const libraryDiv = document.getElementById("library");
-  libraryDiv.innerHTML = ""; // clear old content
-
-  library.forEach(book => {
-    const card = document.createElement("div");
-    card.classList.add("book-card");
-    card.setAttribute("data-id", book.id);
-
-    card.innerHTML = `
-      <h3>${book.title}</h3>
-      <p><strong>Author:</strong> ${book.author}</p>
-      <p><strong>Pages:</strong> ${book.pages}</p>
-      <p><strong>Status:</strong> ${book.read ? "✅ Read" : "❌ Not Read"}</p>
-      <button class="toggleBtn">Toggle Read</button>
-      <button class="removeBtn">Remove</button>
-    `;
-
-    // Remove button
-    card.querySelector(".removeBtn").addEventListener("click", () => {
-      removeBook(book.id);
+  const render = (board) => {
+    boardDiv.innerHTML = "";
+    board.forEach((mark, index) => {
+      const square = document.createElement("div");
+      square.classList.add("square");
+      square.textContent = mark;
+      square.addEventListener("click", () => GameController.playRound(index));
+      boardDiv.appendChild(square);
     });
+  };
 
-    // Toggle read button
-    card.querySelector(".toggleBtn").addEventListener("click", () => {
-      book.toggleRead();
-      displayBooks();
-    });
+  const showResult = (message) => {
+    resultDiv.textContent = message;
+  };
 
-    libraryDiv.appendChild(card);
-  });
-}
+  const reset = () => {
+    resultDiv.textContent = "";
+  };
 
-// Handle form
-const dialog = document.getElementById("bookDialog");
-const newBookBtn = document.getElementById("newBookBtn");
-const closeDialog = document.getElementById("closeDialog");
-const bookForm = document.getElementById("bookForm");
+  return { render, showResult, reset };
+})();
 
-newBookBtn.addEventListener("click", () => dialog.showModal());
-closeDialog.addEventListener("click", () => dialog.close());
+// GameController module
+const GameController = (() => {
+  let player1;
+  let player2;
+  let currentPlayer;
 
-bookForm.addEventListener("submit", (e) => {
-  e.preventDefault(); // prevent page reload
+  const startGame = () => {
+    const p1Name = document.getElementById("player1").value || "Player 1";
+    const p2Name = document.getElementById("player2").value || "Player 2";
+    player1 = Player(p1Name, "X");
+    player2 = Player(p2Name, "O");
+    currentPlayer = player1;
+    Gameboard.reset();
+    DisplayController.reset();
+    DisplayController.render(Gameboard.getBoard());
+  };
 
-  const title = document.getElementById("title").value;
-  const author = document.getElementById("author").value;
-  const pages = document.getElementById("pages").value;
-  const read = document.getElementById("read").checked;
+  const switchPlayer = () => {
+    currentPlayer = currentPlayer === player1 ? player2 : player1;
+  };
 
-  addBook(title, author, pages, read);
-  dialog.close();
-  bookForm.reset();
-});
+  const checkWin = (board) => {
+    const winConditions = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // columns
+      [0,4,8],[2,4,6]          // diagonals
+    ];
+    for (const [a,b,c] of winConditions) {
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return true;
+      }
+    }
+    return false;
+  };
 
-// Add some sample books manually
-addBook("The Quran", "Unknown", 604, true);
-addBook("Clean Code", "Robert C. Martin", 464, false);
+  const checkTie = (board) => board.every(square => square !== "");
+
+  const playRound = (index) => {
+    if (Gameboard.setMark(index, currentPlayer.mark)) {
+      DisplayController.render(Gameboard.getBoard());
+
+      if (checkWin(Gameboard.getBoard())) {
+        DisplayController.showResult(`${currentPlayer.name} wins!`);
+        return;
+      }
+      if (checkTie(Gameboard.getBoard())) {
+        DisplayController.showResult("It's a tie!");
+        return;
+      }
+
+      switchPlayer();
+    }
+  };
+
+  return { startGame, playRound };
+})();
+
+// Event listeners
+document.getElementById("startBtn").addEventListener("click", GameController.startGame);
+document.getElementById("restartBtn").addEventListener("click", GameController.startGame);
+
+// Initialize empty board
+DisplayController.render(Gameboard.getBoard());
